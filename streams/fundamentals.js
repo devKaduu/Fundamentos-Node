@@ -6,9 +6,11 @@
 
 // Consigo trabalhar com os dados antes deles estarem completos
 
+// Buffer - é uma forma de transacionar dados entre streams
+
 process.stdin.pipe(process.stdout);
 
-import { Readable, Writable } from "node:stream";
+import { Readable, Writable, Transform } from "node:stream";
 
 class OneToHundredStream extends Readable {
   index = 1;
@@ -28,6 +30,16 @@ class OneToHundredStream extends Readable {
   }
 }
 
+class InverseNumberStream extends Transform {
+  _transform(chunk, encoding, callback) {
+    const transformed = Number(chunk.toString()) * -1;
+
+    //  Primeiro paramentro é o erro
+    //  Segundo paramentro é a conversao o transformado
+    callback(null, Buffer.from(String(transformed)));
+  }
+}
+
 class MultiplyByTenStream extends Writable {
   //  Chunk é o pedaço do dado que a gente leu da stream de leitura
   //  Encoding Como essa informacao tá codificada
@@ -40,5 +52,5 @@ class MultiplyByTenStream extends Writable {
 }
 
 // new OneToHundredStream().pipe(process.stdout); // Normal
-new OneToHundredStream().pipe(new MultiplyByTenStream()); // Multiplicando por 10
-
+// new OneToHundredStream().pipe(new MultiplyByTenStream()); // Multiplicando por 10
+new OneToHundredStream().pipe(new InverseNumberStream()).pipe(new MultiplyByTenStream());
